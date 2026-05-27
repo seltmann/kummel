@@ -1,6 +1,9 @@
 #split into 1000 records, combine records together
 
 setwd("~/Documents/kummel")
+library(dplyr)
+library(stringr)
+library(readr)
 
 # ---- Load your data ----
 data <- read_tsv("Kummel_Data_20250509.tsv", col_types = cols(.default = col_character()))
@@ -18,3 +21,28 @@ for (i in 1:n) {
   filename <- paste0("output/cleaned_data_chunk_", i, ".csv")
   write.csv(chunk, filename, row.names = FALSE)
 }
+
+
+##############cleaning functions#############
+data <- read.csv("output/cleaned_data_chunk_1.csv", stringsAsFactors = FALSE)
+
+#To switch the values between ScientificName and associatedTaxa only when associatedTaxa contains "Quercus agrifolia"
+
+data <- data %>%
+  mutate(
+    # Create temporary copies of both columns
+    original_ScientificName = ScientificName,
+    original_associatedTaxa = associatedTaxa,
+    
+    # Perform the conditional swap
+    ScientificName = if_else(str_detect(original_associatedTaxa, "Quercus agrifolia"), 
+                             original_associatedTaxa, 
+                             original_ScientificName),
+    
+    associatedTaxa = if_else(str_detect(original_associatedTaxa, "Quercus agrifolia"), 
+                             original_ScientificName, 
+                             original_associatedTaxa)
+  ) %>%
+  select(-original_ScientificName, -original_associatedTaxa)  # clean up
+
+write.csv(data,"output/cleaned_data_chunk_1_new.csv",row.names = FALSE)
